@@ -1,4 +1,4 @@
-package mian
+package main
 
 import (
 	"context"
@@ -12,7 +12,9 @@ import (
 
 // test:  docker run -d --name test_log  alpine sh -c 'for i in `seq 10000`; do echo $i; sleep 1; done'
 
-func saveLog(container string, dstFilename string, stdout bool, stderr bool, wg *sync.WaitGroup)  {
+func saveLog(container string, dstFilename string, stdout bool, stderr bool, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
@@ -24,13 +26,13 @@ func saveLog(container string, dstFilename string, stdout bool, stderr bool, wg 
 	if stdout {
 		options = types.ContainerLogsOptions{
 			ShowStdout: true,
-			Follow: true,
+			Follow:     true,
 		}
 	}
 	if stderr {
 		options = types.ContainerLogsOptions{
 			ShowStderr: true,
-			Follow: true,
+			Follow:     true,
 		}
 	}
 
@@ -38,12 +40,28 @@ func saveLog(container string, dstFilename string, stdout bool, stderr bool, wg 
 	if err != nil {
 		panic(err)
 	}
-
-	defer reader.Close()
-	defer wg.Done()
+	defer func(reader io.ReadCloser) {
+		err := reader.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(reader)
 
 	f, err := os.Create(dstFilename)
+	if err != nil {
+		panic(err)
+	}
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(f)
+
 	_, err = io.Copy(f, reader)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
