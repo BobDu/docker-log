@@ -1,0 +1,7 @@
+steps:
+  - name: 'gcr.io/cloud-builders/go'
+    args: ['build']
+artifacts:
+  objects:
+    location: 'gs://tinymind/deploy/'
+    paths: ['docker-log']

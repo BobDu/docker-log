@@ -22,41 +22,27 @@ func saveLog(container string, dstFilename string, stdout bool, stderr bool, wg 
 	}
 	cli.NegotiateAPIVersion(ctx)
 
-	options := types.ContainerLogsOptions{}
+	options := types.ContainerLogsOptions{Follow: true}
 	if stdout {
-		options = types.ContainerLogsOptions{
-			ShowStdout: true,
-			Follow:     true,
-		}
+		options.ShowStdout = true
 	}
 	if stderr {
-		options = types.ContainerLogsOptions{
-			ShowStderr: true,
-			Follow:     true,
-		}
+		options.ShowStderr = true
 	}
 
 	reader, err := cli.ContainerLogs(ctx, container, options)
 	if err != nil {
 		panic(err)
 	}
-	defer func(reader io.ReadCloser) {
-		err := reader.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(reader)
+	// noinspection GoUnhandledErrorResult
+	defer reader.Close()
 
 	f, err := os.Create(dstFilename)
 	if err != nil {
 		panic(err)
 	}
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(f)
+	// noinspection GoUnhandledErrorResult
+	defer f.Close()
 
 	_, err = io.Copy(f, reader)
 	if err != nil {
