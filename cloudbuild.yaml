@@ -1,6 +1,7 @@
 steps:
   - name: 'gcr.io/cloud-builders/go'
     args: ['build']
+    env: ['GO111MODULE=on']
 artifacts:
   objects:
     location: 'gs://tinymind/deploy/'
